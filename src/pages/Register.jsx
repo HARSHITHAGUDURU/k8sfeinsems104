@@ -23,6 +23,7 @@ export default function Register() {
   const handleRegister = async () => {
     const { name, email, phone, password, confirmPassword, role } = formData;
 
+    // ✅ Basic validation
     if (!name || !email || !phone || !password || !confirmPassword) {
       setErrorMessage('Please fill in all fields');
       return;
@@ -34,22 +35,38 @@ export default function Register() {
     }
 
     try {
-      const response = await axios.post('http://localhost:9000/api/user/register', {
-        name,
-        email,
-        phone,
-        password,
-        role,
-      });
+      // ✅ Use the correct backend URL
+      const response = await axios.post(
+        'http://localhost:9000/api/user/register',
+        { name, email, phone, password, role },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
-      if (response.data.includes('success')) {
+      // ✅ Handle response properly
+      if (response.status === 200 || response.status === 201) {
         alert('Registration successful!');
         navigate('/login');
       } else {
-        setErrorMessage(response.data);
+        setErrorMessage(response.data?.message || 'Unexpected server response');
       }
     } catch (error) {
-      setErrorMessage('Failed to register. Please try again later.');
+      // ✅ More detailed error handling
+      if (error.response) {
+        // Server responded with an error (400, 409, 500, etc.)
+        setErrorMessage(
+          error.response.data?.message || 'Failed to register. Please try again.'
+        );
+      } else if (error.request) {
+        // No response (CORS or server down)
+        setErrorMessage('Cannot connect to server. Check if backend is running.');
+      } else {
+        // Other errors
+        setErrorMessage('An unexpected error occurred.');
+      }
     }
   };
 
@@ -105,7 +122,8 @@ export default function Register() {
         </button>
 
         <p className="switch-text">
-          Already have an account? <span onClick={() => navigate('/login')}>Login</span>
+          Already have an account?{' '}
+          <span onClick={() => navigate('/login')}>Login</span>
         </p>
       </div>
     </div>
